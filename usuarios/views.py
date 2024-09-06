@@ -68,7 +68,7 @@ def lancar(request):
             return HttpResponse("Disciplina ja possui notas cadastradas!")
         else:
             nota.save()
-            return.render(request, 'usuarios/home.html')
+            return render(request, 'usuarios/home.html')
 
 def alterar(request):
     if request.user.is_authenticated:
@@ -77,11 +77,26 @@ def alterar(request):
         return HttpResponse("Faça o login para acessar!")
 
 def vizualizar(request):
-    if request.user.is_authenticated:
-        return render(request, 'usuarios/vizualizar.html')
+    if request.method =="GET":
+        if request.user.is_authenticated:
+            lista_notas = Nota.objects.all()
+            dicionario_notas = {'lista_notas':lista_notas}
+            return render(request, 'usuarios/vizualizar.html', dicionario_notas)
+        else:
+            return HttpResponse("Faça o login para acessar!")
     else:
-        return HttpResponse("Faça o login para acessar!")
-    
+        disciplina = request.POST.get('disciplina') #linha de comando para o filtro#
+        if disciplina == "Todas as disciplinas":
+            lista_notas = Nota.objects.all()
+            dicionario_notas = {'lista_notas':lista_notas}
+            return render(request, 'usuarios/vizualizar.html', dicionario_notas)
+        else:
+            lista_notas = Nota.objects.filter(disciplina=disciplina) #comando para outro filtro, não sendo a opçao de todas as discicplinas#
+            disciplina_notas_filtradas = {"lista_notas": lista_notas}
+            return render(request, 'usuarios/visualizar.html', dicionario_notas)
+
+
+
 def logout(request):
     if request.user.is_authenticated:
         logout_django(request)
