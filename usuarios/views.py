@@ -1,9 +1,10 @@
 from django.shortcuts import render
-from django.http.response import HttpResponse
+from django.http.response import HttpResponse, HttpResponseRedirect
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate #isso serve para o proprio django ir no bd pegar as info e confirmar#
 from django.contrib.auth import login as login_django, logout as logout_django #so faz liberação das autenticação, não consulta o bd#
 from .models import Nota
+from django.urls import reverse
 
 
 def login(request):
@@ -71,10 +72,55 @@ def lancar(request):
             return render(request, 'usuarios/home.html')
 
 def alterar(request):
-    if request.user.is_authenticated:
-        return render(request, 'usuarios/alterar.html')
-    else:
-        return HttpResponse("Faça o login para acessar!")
+    if request.method == "GET":
+        if request.user.is_authenticated:
+            lista_notas = Nota.objects.all()
+            dicionario_notas = {'lista_notas':lista_notas}
+            return render(request, 'usuarios/alterar.html', dicionario_notas)
+        else:
+            return HttpResponse("Faça o login para acessar!")
+
+
+def excluir_verificacao(request, pk):
+    if request.method == "GET":
+        if request.user.is_authenticated:
+            lista_notas = Nota.objects.get(pk=pk)
+            dicionario_notas = {'lista_notas' : lista_notas}
+            return render(request, 'usuarios/excluir.html', dicionario_notas)
+        else:
+            return HttpResponse("Faça o login para acessar!")
+
+def editar_verificacao(request, pk):
+    if request.method == "GET":
+        if request.user.is_authenticated:
+            lista_notas = Nota.objects.get(pk=pk)
+            dicionario_notas = {'lista_notas' : lista_notas}
+            return render(request, 'usuarios/editar.html', dicionario_notas)
+        else:
+            return HttpResponse("Faça o login para acessar!")
+
+def editar(request, pk):
+    if request.method == "POST":
+        if request.user.is_authenticated:
+            nome_aluno = request.user.first_name
+            disciplina = request.POST.get('disciplina')
+            nota_atividade = request.POST.get('nota_atividade')
+            nota_trabalho = request.POST.get('nota_trabalho')
+            nota_prova = request.POST.get('nota_prova')
+            media = int(nota_atividade) + int(nota_trabalho) + int(nota_prova)
+            Nota.objects.filter(pk=pk).update(nome_aluno = nome_aluno, disciplina = disciplina, nota_atividade = nota_atividade, nota_trabalho = nota_trabalho, nota_prova = nota_prova, media = media)
+            return HttpResponseRedirect(reverse('alterar'))
+        else:
+            return HttpResponse("Faça o login para acessar!")
+    
+def excluir(request, pk):
+    if request.method == "GET":
+        if request.user.is_authenticated:
+            disciplina_selecionada = Nota.objects.get(pk=pk)
+            disciplina_selecionada.delete()
+            return HttpResponseRedirect(reverse ('alterar'))
+        else:
+            return HttpResponse("Faça o login para acessar!")
 
 def vizualizar(request):
     if request.method =="GET":
@@ -87,13 +133,13 @@ def vizualizar(request):
     else:
         disciplina = request.POST.get('disciplina') #linha de comando para o filtro#
         if disciplina == "Todas as disciplinas":
-            lista_notas = Nota.objects.all()
+            lista_notas == Nota.objects.all()
             dicionario_notas = {'lista_notas':lista_notas}
             return render(request, 'usuarios/vizualizar.html', dicionario_notas)
         else:
             lista_notas = Nota.objects.filter(disciplina=disciplina) #comando para outro filtro, não sendo a opçao de todas as discicplinas#
-            disciplina_notas_filtradas = {"lista_notas": lista_notas}
-            return render(request, 'usuarios/visualizar.html', dicionario_notas)
+            disciplina_notas_filtradas = {"lista_notas":lista_notas}
+            return render(request, 'usuarios/vizualizar.html', dicionario_notas_filtradas)
 
 
 
